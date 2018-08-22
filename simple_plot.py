@@ -8,6 +8,11 @@ f = Figure(figsize=(5,5), dpi=100)
 a = f.add_subplot(111)
 buttons = []
 click_command = False
+fixed_size = True
+
+def variable_size():
+    global fixed_size
+    fixed_size = False
 
 def on_click(event):
     click_command(event.xdata, event.ydata)
@@ -28,8 +33,9 @@ class Window(tk.Frame):
             ttk.Button(self, text=button[0], command=button[1]).pack()
         global canvas
         canvas = FigureCanvasTkAgg(f, self)
-        a.set_xlim(0, 1)
-        a.set_ylim(0, 1)
+        if fixed_size:
+            a.set_xlim(0, 1)
+            a.set_ylim(0, 1)
         canvas.show()
         canvas.mpl_connect('button_press_event', on_click)
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -45,8 +51,9 @@ def get_a():
     return a
 
 def redraw():
-    a.set_xlim(0, 1)
-    a.set_ylim(0, 1)
+    if fixed_size:
+        a.set_xlim(0, 1)
+        a.set_ylim(0, 1)
     canvas.show()
 
 def start():
