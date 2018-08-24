@@ -1,6 +1,7 @@
-from simple_plot import variable_size, add_button, add_click, get_a, redraw, start
+from gui import *
 import sounddevice as sd
 import numpy as np
+import time
 
 sd.default.samplerate = 8000
 sd.default.channels = 1
@@ -46,36 +47,57 @@ def classify(point, distance, points, labels):
             best_label = labels[i]
     return best_label
 
-def record(duration):
-    waveform = sd.rec(duration*sd.default.samplerate)
-    sd.wait()
-    waveform = waveform[:,0]
+def start_recording(maximum_duration):
+    def internal(ignore):
+        global waveform, start_time
+        message("")
+        waveform = sd.rec(maximum_duration*sd.default.samplerate)
+        start_time = time.time()
+    return internal
+
+def stop_recording():
+    global waveform
+    actual_time = time.time()-start_time
+    sd.stop()
+    samples = min(int(actual_time*sd.default.samplerate), len(waveform))
+    waveform = waveform[0:samples, 0]
     sd.play(waveform)
     sd.wait()
+    get_a().clear()
     spectrum, freqs, t, im = get_a().specgram(waveform,
                                               Fs=sd.default.samplerate)
     redraw()
     return np.transpose(spectrum)
 
-def clear_command():
+def clear_command(ignore):
     points = []
     labels = []
+    message("")
+    get_a().clear()
+    redraw()
 
-def dog_command():
-    points.append(record(2))
-    labels.append("dog")
+def dog_command(ignore):
+    message("")
+    points.append(stop_recording())
+    labels.append("Dog")
 
-def cat_command():
-    points.append(record(3))
-    labels.append("cat")
+def cat_command(ignore):
+    message("")
+    points.append(stop_recording())
+    labels.append("Cat")
 
-def classify_command():
-    print classify(record(4), dtw(L2_vector(L2_scalar)), points, labels)
+def classify_command(ignore):
+    message("")
+    message(classify(stop_recording(),
+                     dtw(L2_vector(L2_scalar)),
+                     points,
+                     labels))
 
 variable_size()
-add_button("Clear", clear_command)
-add_button("Dog", dog_command)
-add_button("Cat", cat_command)
-add_button("Classify", classify_command)
-add_button("Exit", exit)
-start()
+add_button(0, 0, "Clear", clear_command, nothing)
+add_button(0, 1, "Dog", start_recording(10), dog_command)
+add_button(0, 2, "Cat", start_recording(10), cat_command)
+add_button(0, 3, "Classify", start_recording(10), classify_command)
+add_button(0, 4, "Exit", done, nothing)
+message = add_message(1, 0, 2)
+start(7, 7, 2, 5)

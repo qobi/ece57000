@@ -1,4 +1,4 @@
-from simple_plot import add_button, add_click, get_a, redraw, start
+from gui import *
 import random
 
 points = []
@@ -53,25 +53,27 @@ def redisplay():
         get_a().plot([means[1][0]], [means[1][1]], "bo")
     redraw()
 
-def clear_command():
-    global points, labels
+def clear_command(ignore):
+    global points, labels, means
     points = []
     labels = []
+    means = []
     get_a().clear()
     redraw()
 
-def random_labels_command():
-    global labels
+def random_labels_command(ignore):
+    global labels, means
+    means = []
     for i in range(0, len(points)):
         labels[i] = random.randint(0, 1)
     redisplay()
 
-def train_command():
+def train_command(ignore):
     global means
     means = train(points, labels)
     redisplay()
 
-def reclassify_all_command():
+def reclassify_all_command(ignore):
     global labels
     for i in range(0, len(points)):
         labels[i] = classify(points[i], means)
@@ -83,10 +85,10 @@ def click(x, y):
     get_a().plot([x], [y], "g+")
     redraw()
 
-add_button("Clear", clear_command)
-add_button("Random labels", random_labels_command)
-add_button("Train", train_command)
-add_button("Reclassify all", reclassify_all_command)
-add_button("Exit", exit)
+add_button(0, 0, "Clear", clear_command, nothing)
+add_button(0, 1, "Random labels", random_labels_command, nothing)
+add_button(0, 2, "Train", train_command, nothing)
+add_button(0, 3, "Reclassify all", reclassify_all_command, nothing)
+add_button(0, 4, "Exit", done, nothing)
 add_click(click)
-start()
+start(7, 7, 1, 5)

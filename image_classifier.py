@@ -1,4 +1,4 @@
-from simple_plot import variable_size, add_button, add_click, get_a, redraw, start
+from gui import *
 import cv2
 import numpy as np
 
@@ -57,12 +57,21 @@ def bidirectional_chamfer_distance(distance):
                 unidirectional_chamfer_distance(distance)(points2, points1))
     return internal
 
-def edge_pixels(a):
-    m, n = a.shape
+def process(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    v = np.median(gray)
+    sigma = 0.33
+    lower_thresh = int(max(0, (1.0-sigma)*v))
+    upper_thresh = int(min(255, (1.0+sigma)*v))
+    edge = cv2.Canny(gray, lower_thresh, upper_thresh)
+    return edge
+
+def edge_pixels(image):
+    m, n = image.shape
     pixels = []
     for i in range(0, m, 10):
         for j in range(0, n, 10):
-            if a[i, j]>0:
+            if image[i, j]>0:
                 pixels.append([i,j])
     return pixels
 
@@ -70,38 +79,40 @@ def capture():
     camera = cv2.VideoCapture(0)
     return_value, image = camera.read()
     camera.release()
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    v = np.median(gray)
-    sigma = 0.33
-    lower_thresh = int(max(0, (1.0-sigma)*v))
-    upper_thresh = int(min(255, (1.0+sigma)*v))
-    edge = cv2.Canny(gray, lower_thresh, upper_thresh)
+    edge = process(image)
     get_a().imshow(edge, cmap="gray")
     redraw()
     return edge_pixels(edge)
 
-def clear_command():
+def clear_command(ignore):
     points = []
     labels = []
+    message("")
+    get_a().clear()
+    redraw()
 
-def cup_command():
+def cup_command(ignore):
+    message("")
     points.append(capture())
-    labels.append("cup")
+    labels.append("Cup")
 
-def box_command():
+def box_command(ignore):
+    message("")
     points.append(capture())
-    labels.append("box")
+    labels.append("Box")
 
-def classify_command():
-    print classify(capture(),
-                   bidirectional_chamfer_distance(L2_vector(L2_scalar)),
-                   points,
-                   labels)
+def classify_command(ignore):
+    message("")
+    message(classify(capture(),
+                     bidirectional_chamfer_distance(L2_vector(L2_scalar)),
+                     points,
+                     labels))
 
 variable_size()
-add_button("Clear", clear_command)
-add_button("Cup", cup_command)
-add_button("Box", box_command)
-add_button("Classify", classify_command)
-add_button("Exit", exit)
-start()
+add_button(0, 0, "Clear", clear_command, nothing)
+add_button(0, 1, "Cup", cup_command, nothing)
+add_button(0, 2, "Box", box_command, nothing)
+add_button(0, 3, "Classify", classify_command, nothing)
+add_button(0, 4, "Exit", done, nothing)
+message = add_message(1, 0, 2)
+start(7, 7, 2, 5)

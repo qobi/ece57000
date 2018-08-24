@@ -1,6 +1,5 @@
-from simple_plot import add_button, add_click, get_a, redraw, start
+from gui import *
 
-mode = 0
 points = []
 labels = []
 means = []
@@ -41,22 +40,15 @@ def classify(point, means):
             best_label = j
     return best_label
 
-def clear_command():
+def clear_command(ignore):
     global points, labels
     points = []
     labels = []
+    message("")
     get_a().clear()
     redraw()
 
-def red_command():
-    global mode
-    mode = 0
-
-def blue_command():
-    global mode
-    mode = 1
-
-def train_command():
+def train_command(ignore):
     global means
     means = train(points, labels)
     get_a().clear()
@@ -69,33 +61,31 @@ def train_command():
     get_a().plot([means[1][0]], [means[1][1]], "bo")
     redraw()
 
-def classify_command():
-    global mode
-    mode = 2
-
 def click(x, y):
-    if mode==0:
+    if mode()==0:
         points.append([x, y])
-        labels.append(mode)
+        labels.append(mode())
         get_a().plot([x], [y], "r+")
         redraw()
-    elif mode==1:
+    elif mode()==1:
         points.append([x, y])
-        labels.append(mode)
+        labels.append(mode())
         get_a().plot([x], [y], "b+")
         redraw()
     else:
         label = classify([x, y], means)
         if label==0:
-            print "Red"
+            message("Red")
         elif label==1:
-            print "Blue"
+            message("Blue")
 
-add_button("Clear", clear_command)
-add_button("Red", red_command)
-add_button("Blue", blue_command)
-add_button("Train", train_command)
-add_button("Classify", classify_command)
-add_button("Exit", exit)
+add_button(0, 0, "Clear", clear_command, nothing)
+mode = add_radio_button_group([[0, 1, "Red", 0],
+                               [0, 2, "Blue", 1],
+                               [0, 3, "Classify", 2]],
+                              lambda: False)
+add_button(0, 4, "Train", train_command, nothing)
+add_button(0, 5, "Exit", done, nothing)
+message = add_message(1, 0, 2)
 add_click(click)
-start()
+start(7, 7, 2, 6)
