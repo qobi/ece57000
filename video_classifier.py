@@ -16,16 +16,6 @@ def L2_vector(distance):
         return d
     return internal
 
-def classify(point, distance, points, labels):
-    best_distance = float("inf")
-    best_label = -1
-    for i in range(0, len(points)):
-        d = distance(point, points[i])
-        if d<best_distance:
-            best_distance = d
-            best_label = labels[i]
-    return best_label
-
 def unidirectional_hausdorf_distance(distance):
     def internal(points1, points2):
         d = 0
@@ -75,6 +65,16 @@ def dtw(distance):
         return c[m-1, n-1]
     return internal
 
+def classify(point, distance, points, labels):
+    best_distance = float("inf")
+    best_label = -1
+    for i in range(0, len(points)):
+        d = distance(point, points[i])
+        if d<best_distance:
+            best_distance = d
+            best_label = labels[i]
+    return best_label
+
 def process(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     v = np.median(gray)
@@ -93,61 +93,63 @@ def edge_pixels(image):
                 pixels.append([i,j])
     return pixels
 
-def start_recording(ignore):
+def start_recording():
     message("")
     global camera
     camera = cv2.VideoCapture(0)
-    camera.set(cv2.CAP_PROP_FPS, 15)
     global stop, video
     stop = False
     video = []
     def internal():
         if not stop:
             return_value, image = camera.read()
-            get_a().imshow(image)
-            redraw()
-            video.append(image)
-            task().after(10, internal)
+            edge = process(image)
+            if show_edges():
+                get_window().show_image(cv2.cvtColor(edge, cv2.COLOR_GRAY2BGR))
+            else:
+                get_window().show_image(image)
+            video.append(edge)
+            get_window().after(10, internal)
     internal()
 
 def stop_recording():
     global stop
     stop = True
     camera.release()
-    for image in video:
-        get_a().imshow(process(image), cmap="gray")
-        redraw()
-    return [edge_pixels(process(image)) for image in video]
+    return [edge_pixels(edge) for edge in video]
 
-def clear_command(ignore):
+def clear_command():
     points = []
     labels = []
     message("")
-    get_a().clear()
-    redraw()
 
-def pick_up_command(ignore):
+def pick_up_command():
     message("")
     points.append(stop_recording())
     labels.append("Pick Up")
 
-def put_down_command(ignore):
+def put_down_command():
     message("")
     points.append(stop_recording())
     labels.append("Put Down")
 
-def classify_command(ignore):
+def classify_command():
     message("")
     message(classify(stop_recording(),
                      dtw(bidirectional_chamfer_distance(L2_vector(L2_scalar))),
                      points,
                      labels))
 
-variable_size()
 add_button(0, 0, "Clear", clear_command, nothing)
-add_button(0, 1, "Pick Up", start_recording, pick_up_command)
-add_button(0, 2, "Put Down", start_recording, put_down_command)
-add_button(0, 3, "Classify", start_recording, classify_command)
-add_button(0, 4, "Exit", done, nothing)
+show_edges = add_checkbox(0, 1, "Edges?", nothing)
+add_button(0, 2, "Pick Up", start_recording, pick_up_command)
+add_button(0, 3, "Put Down", start_recording, put_down_command)
+add_button(0, 4, "Classify", start_recording, classify_command)
+add_button(0, 5, "Exit", done, nothing)
 message = add_message(1, 0, 2)
-start(7, 7, 2, 5)
+camera = cv2.VideoCapture(0)
+width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+fps = camera.get(cv2.CAP_PROP_FPS)
+camera.release()
+start_video(width, height, 2, 6)

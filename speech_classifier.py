@@ -48,7 +48,7 @@ def classify(point, distance, points, labels):
     return best_label
 
 def start_recording(maximum_duration):
-    def internal(ignore):
+    def internal():
         global waveform, start_time
         message("")
         waveform = sd.rec(maximum_duration*sd.default.samplerate)
@@ -63,41 +63,40 @@ def stop_recording():
     waveform = waveform[0:samples, 0]
     sd.play(waveform)
     sd.wait()
-    get_a().clear()
-    spectrum, freqs, t, im = get_a().specgram(waveform,
-                                              Fs=sd.default.samplerate)
+    get_axes().clear()
+    spectrum, freqs, t, im = get_axes().specgram(waveform,
+                                                 Fs=sd.default.samplerate)
     redraw()
     return np.transpose(spectrum)
 
-def clear_command(ignore):
+def clear_command():
     points = []
     labels = []
     message("")
-    get_a().clear()
+    get_axes().clear()
     redraw()
 
-def dog_command(ignore):
+def dog_command():
     message("")
     points.append(stop_recording())
     labels.append("Dog")
 
-def cat_command(ignore):
+def cat_command():
     message("")
     points.append(stop_recording())
     labels.append("Cat")
 
-def classify_command(ignore):
+def classify_command():
     message("")
     message(classify(stop_recording(),
                      dtw(L2_vector(L2_scalar)),
                      points,
                      labels))
 
-variable_size()
 add_button(0, 0, "Clear", clear_command, nothing)
 add_button(0, 1, "Dog", start_recording(10), dog_command)
 add_button(0, 2, "Cat", start_recording(10), cat_command)
 add_button(0, 3, "Classify", start_recording(10), classify_command)
 add_button(0, 4, "Exit", done, nothing)
 message = add_message(1, 0, 2)
-start(7, 7, 2, 5)
+start_variable_size_matplotlib(7, 7, 2, 5)

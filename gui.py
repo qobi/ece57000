@@ -3,45 +3,39 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import tkinter as tk
 from tkinter import ttk
+import cv2
+import PIL.Image, PIL.ImageTk
 
-button_rows = 0
-button_columns = 0
 buttons = []
+checkboxes = []
+checkbox_variables = []
 radio_button_groups = []
 radio_button_variables = []
 messages = []
 message_variables = []
 click_command = False
-fixed_size = True
-
-def variable_size():
-    global fixed_size
-    fixed_size = False
-
-def on_click(event):
-    click_command(event.xdata, event.ydata)
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        global frame
-        frame = Window(container, self)
-        frame.grid(row=0, column=0, sticky="nsew")
-        frame.tkraise()
-        self.bind("<Control-c>", done)
-        self.bind("<Escape>", done)
-
-class Window(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        global window
+        window = self
         for button in buttons:
             row, column, text, press, release = button
             b = ttk.Button(self, text=text)
-            b.bind("<ButtonPress-1>", press)
-            b.bind("<ButtonRelease-1>", release)
+            b.bind("<ButtonPress-1>",
+                   (lambda press: (lambda event: press()))(press))
+            b.bind("<ButtonRelease-1>",
+                   (lambda release: (lambda event: release()))(release))
             b.grid(row=row, column=column)
+        for checkbox in checkboxes:
+            row, column, text, command = checkbox
+            variable = tk.IntVar()
+            checkbox_variables.append(variable)
+            ttk.Checkbutton(self,
+                            text=text,
+                            variable=variable,
+                            command=command).grid(row=row, column=column)
         for radio_button_group in radio_button_groups:
             radio_buttons, command = radio_button_group
             variable = tk.IntVar()
@@ -61,23 +55,43 @@ class Window(tk.Frame):
             m.config(font=("Verdana", 14), textvariable=variable)
             m.grid(row=row, column=column, columnspan=columnspan)
         global canvas
-        canvas = FigureCanvasTkAgg(f, self)
-        if fixed_size:
-            a.set_xlim(0, 1)
-            a.set_ylim(0, 1)
-        canvas.show()
-        if click_command:
-            canvas.mpl_connect('button_press_event', on_click)
-        canvas.get_tk_widget().grid(row=button_rows, columnspan=button_columns)
+        if use_matplotlib:
+            canvas = FigureCanvasTkAgg(figure, self)
+            if fixed_size:
+                axes.set_xlim(0, 1)
+                axes.set_ylim(0, 1)
+            canvas.show()
+            if click_command:
+                canvas.mpl_connect('button_press_event',
+                                   lambda event: click_command(event.xdata,
+                                                               event.ydata))
+            canvas.get_tk_widget().grid(row=button_rows,
+                                        columnspan=button_columns)
+        else:
+            canvas = tk.Canvas(self, width=window_width, height=window_height)
+            canvas.grid(row=button_rows, columnspan=button_columns)
+        self.bind("<Control-c>", lambda event: done())
+        self.bind("<Escape>", lambda event: done())
+    def show_image(self, bgr_image):
+        rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(rgb_image))
+        canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
 
-def nothing(event):
+def nothing():
     return
 
-def done(event):
+def done():
     exit()
 
 def add_button(row, column, text, press, release):
     buttons.append([row, column, text, press, release])
+
+def add_checkbox(row, column, text, command):
+    checkboxes.append([row, column, text, command])
+    i = len(checkboxes)-1
+    def internal():
+        return checkbox_variables[i].get()==1
+    return internal
 
 def add_radio_button_group(buttons, command):
     radio_button_groups.append([buttons, command])
@@ -97,22 +111,48 @@ def add_click(command):
     global click_command
     click_command = command
 
-def get_a():
-    return a
+def get_axes():
+    return axes
 
 def redraw():
     if fixed_size:
-        a.set_xlim(0, 1)
-        a.set_ylim(0, 1)
+        axes.set_xlim(0, 1)
+        axes.set_ylim(0, 1)
     canvas.show()
 
-def task():
-    return frame
+def get_window():
+    return window
 
-def start(width, height, rows, columns):
-    global f, a, button_rows, button_columns
+def start_fixed_size_matplotlib(width, height, rows, columns):
+    global use_matplotlib
+    use_matplotlib = True
+    global fixed_size, figure, axes, button_rows, button_columns
+    fixed_size = True
     button_rows = rows
     button_columns = columns
-    f = Figure(figsize=(width, height), dpi=100)
-    a = f.add_subplot(111)
+    global axes
+    figure = Figure(figsize=(width, height), dpi=100)
+    axes = figure.add_subplot(111)
+    App().mainloop()
+
+def start_variable_size_matplotlib(width, height, rows, columns):
+    global use_matplotlib
+    use_matplotlib = True
+    global fixed_size, figure, axes, button_rows, button_columns
+    fixed_size = False
+    button_rows = rows
+    button_columns = columns
+    global axes
+    figure = Figure(figsize=(width, height), dpi=100)
+    axes = figure.add_subplot(111)
+    App().mainloop()
+
+def start_video(width, height, rows, columns):
+    global use_matplotlib
+    use_matplotlib = False
+    global window_width, window_height, button_rows, button_columns
+    window_width = width
+    window_height = height
+    button_rows = rows
+    button_columns = columns
     App().mainloop()

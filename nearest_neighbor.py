@@ -16,24 +16,24 @@ def classify(point, points, labels):
             best_label = labels[i]
     return best_label
 
-def clear_command(ignore):
+def clear_command():
     global points, labels
     points = []
     labels = []
     message("")
-    get_a().clear()
+    get_axes().clear()
     redraw()
 
 def click(x, y):
     if mode()==0:
         points.append([x, y])
         labels.append(mode())
-        get_a().plot([x], [y], "r+")
+        get_axes().plot([x], [y], "r+")
         redraw()
     elif mode()==1:
         points.append([x, y])
         labels.append(mode())
-        get_a().plot([x], [y], "b+")
+        get_axes().plot([x], [y], "b+")
         redraw()
     else:
         label = classify([x, y], points, labels)
@@ -50,4 +50,4 @@ mode = add_radio_button_group([[0, 1, "Red", 0],
 add_button(0, 4, "Exit", done, nothing)
 message = add_message(1, 0, 2)
 add_click(click)
-start(7, 7, 2, 5)
+start_fixed_size_matplotlib(7, 7, 2, 5)

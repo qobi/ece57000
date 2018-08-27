@@ -40,37 +40,37 @@ def classify(point, means):
             best_label = j
     return best_label
 
-def clear_command(ignore):
+def clear_command():
     global points, labels
     points = []
     labels = []
     message("")
-    get_a().clear()
+    get_axes().clear()
     redraw()
 
-def train_command(ignore):
+def train_command():
     global means
     means = train(points, labels)
-    get_a().clear()
+    get_axes().clear()
     for i in range(0, len(points)):
         if labels[i]==0:
-            get_a().plot([points[i][0]], [points[i][1]], "r+")
+            get_axes().plot([points[i][0]], [points[i][1]], "r+")
         elif labels[i]==1:
-            get_a().plot([points[i][0]], [points[i][1]], "b+")
-    get_a().plot([means[0][0]], [means[0][1]], "ro")
-    get_a().plot([means[1][0]], [means[1][1]], "bo")
+            get_axes().plot([points[i][0]], [points[i][1]], "b+")
+    get_axes().plot([means[0][0]], [means[0][1]], "ro")
+    get_axes().plot([means[1][0]], [means[1][1]], "bo")
     redraw()
 
 def click(x, y):
     if mode()==0:
         points.append([x, y])
         labels.append(mode())
-        get_a().plot([x], [y], "r+")
+        get_axes().plot([x], [y], "r+")
         redraw()
     elif mode()==1:
         points.append([x, y])
         labels.append(mode())
-        get_a().plot([x], [y], "b+")
+        get_axes().plot([x], [y], "b+")
         redraw()
     else:
         label = classify([x, y], means)
@@ -88,4 +88,4 @@ add_button(0, 4, "Train", train_command, nothing)
 add_button(0, 5, "Exit", done, nothing)
 message = add_message(1, 0, 2)
 add_click(click)
-start(7, 7, 2, 6)
+start_fixed_size_matplotlib(7, 7, 2, 6)

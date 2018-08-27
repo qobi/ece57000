@@ -16,16 +16,6 @@ def L2_vector(distance):
         return d
     return internal
 
-def classify(point, distance, points, labels):
-    best_distance = float("inf")
-    best_label = -1
-    for i in range(0, len(points)):
-        d = distance(point, points[i])
-        if d<best_distance:
-            best_distance = d
-            best_label = labels[i]
-    return best_label
-
 def unidirectional_hausdorf_distance(distance):
     def internal(points1, points2):
         d = 0
@@ -57,6 +47,16 @@ def bidirectional_chamfer_distance(distance):
                 unidirectional_chamfer_distance(distance)(points2, points1))
     return internal
 
+def classify(point, distance, points, labels):
+    best_distance = float("inf")
+    best_label = -1
+    for i in range(0, len(points)):
+        d = distance(point, points[i])
+        if d<best_distance:
+            best_distance = d
+            best_label = labels[i]
+    return best_label
+
 def process(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     v = np.median(gray)
@@ -80,39 +80,45 @@ def capture():
     return_value, image = camera.read()
     camera.release()
     edge = process(image)
-    get_a().imshow(edge, cmap="gray")
-    redraw()
+    if show_edges():
+        get_window().show_image(cv2.cvtColor(edge, cv2.COLOR_GRAY2BGR))
+    else:
+        get_window().show_image(image)
     return edge_pixels(edge)
 
-def clear_command(ignore):
+def clear_command():
     points = []
     labels = []
     message("")
-    get_a().clear()
-    redraw()
 
-def cup_command(ignore):
+def cup_command():
     message("")
     points.append(capture())
     labels.append("Cup")
 
-def box_command(ignore):
+def box_command():
     message("")
     points.append(capture())
     labels.append("Box")
 
-def classify_command(ignore):
+def classify_command():
     message("")
-    message(classify(capture(),
-                     bidirectional_chamfer_distance(L2_vector(L2_scalar)),
-                     points,
-                     labels))
+    message (classify(capture(),
+                      bidirectional_chamfer_distance(L2_vector(L2_scalar)),
+                      points,
+                      labels))
 
-variable_size()
 add_button(0, 0, "Clear", clear_command, nothing)
-add_button(0, 1, "Cup", cup_command, nothing)
-add_button(0, 2, "Box", box_command, nothing)
-add_button(0, 3, "Classify", classify_command, nothing)
-add_button(0, 4, "Exit", done, nothing)
+show_edges = add_checkbox(0, 1, "Edges?", nothing)
+add_button(0, 2, "Cup", cup_command, nothing)
+add_button(0, 3, "Box", box_command, nothing)
+add_button(0, 4, "Classify", classify_command, nothing)
+add_button(0, 5, "Exit", done, nothing)
 message = add_message(1, 0, 2)
-start(7, 7, 2, 5)
+message = add_message(1, 0, 2)
+camera = cv2.VideoCapture(0)
+width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+fps = camera.get(cv2.CAP_PROP_FPS)
+camera.release()
+start_video(width, height, 2, 6)

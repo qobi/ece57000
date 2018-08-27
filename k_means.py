@@ -42,38 +42,38 @@ def classify(point, means):
     return best_label
 
 def redisplay():
-    get_a().clear()
+    get_axes().clear()
     for i in range(0, len(points)):
         if labels[i]==0:
-            get_a().plot([points[i][0]], [points[i][1]], "r+")
+            get_axes().plot([points[i][0]], [points[i][1]], "r+")
         elif labels[i]==1:
-            get_a().plot([points[i][0]], [points[i][1]], "b+")
+            get_axes().plot([points[i][0]], [points[i][1]], "b+")
     if len(means)==2:
-        get_a().plot([means[0][0]], [means[0][1]], "ro")
-        get_a().plot([means[1][0]], [means[1][1]], "bo")
+        get_axes().plot([means[0][0]], [means[0][1]], "ro")
+        get_axes().plot([means[1][0]], [means[1][1]], "bo")
     redraw()
 
-def clear_command(ignore):
+def clear_command():
     global points, labels, means
     points = []
     labels = []
     means = []
-    get_a().clear()
+    get_axes().clear()
     redraw()
 
-def random_labels_command(ignore):
+def random_labels_command():
     global labels, means
     means = []
     for i in range(0, len(points)):
         labels[i] = random.randint(0, 1)
     redisplay()
 
-def train_command(ignore):
+def train_command():
     global means
     means = train(points, labels)
     redisplay()
 
-def reclassify_all_command(ignore):
+def reclassify_all_command():
     global labels
     for i in range(0, len(points)):
         labels[i] = classify(points[i], means)
@@ -82,7 +82,7 @@ def reclassify_all_command(ignore):
 def click(x, y):
     points.append([x, y])
     labels.append(-1)
-    get_a().plot([x], [y], "g+")
+    get_axes().plot([x], [y], "g+")
     redraw()
 
 add_button(0, 0, "Clear", clear_command, nothing)
@@ -91,4 +91,4 @@ add_button(0, 2, "Train", train_command, nothing)
 add_button(0, 3, "Reclassify all", reclassify_all_command, nothing)
 add_button(0, 4, "Exit", done, nothing)
 add_click(click)
-start(7, 7, 1, 5)
+start_fixed_size_matplotlib(7, 7, 1, 5)
