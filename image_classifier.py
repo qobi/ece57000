@@ -1,61 +1,10 @@
 from gui import *
+from distances_and_classifiers import *
 import cv2
 import numpy as np
 
 points = []
 labels = []
-
-def L2_scalar(p1, p2):
-    return (p1-p2)*(p1-p2)
-
-def L2_vector(distance):
-    def internal(p1, p2):
-        d = 0
-        for i in range(0, len(p1)):
-            d = d+distance(p1[i], p2[i])
-        return d
-    return internal
-
-def unidirectional_hausdorf_distance(distance):
-    def internal(points1, points2):
-        d = 0
-        for point1 in points1:
-            d = max(d,
-                    distance(point1,
-                             classify(point1, distance, points2, points2)))
-        return d
-    return internal
-
-def bidirectional_hausdorf_distance(distance):
-    def internal(points1, points2):
-        return max(unidirectional_hausdorf_distance(distance)(points1, points2),
-                   unidirectional_hausdorf_distance(distance)(points2, points1))
-    return internal
-
-def unidirectional_chamfer_distance(distance):
-    def internal(points1, points2):
-        d = 0
-        for point1 in points1:
-            d = d+distance(point1,
-                           classify(point1, distance, points2, points2))
-        return d
-    return internal
-
-def bidirectional_chamfer_distance(distance):
-    def internal(points1, points2):
-        return (unidirectional_chamfer_distance(distance)(points1, points2)+
-                unidirectional_chamfer_distance(distance)(points2, points1))
-    return internal
-
-def classify(point, distance, points, labels):
-    best_distance = float("inf")
-    best_label = -1
-    for i in range(0, len(points)):
-        d = distance(point, points[i])
-        if d<best_distance:
-            best_distance = d
-            best_label = labels[i]
-    return best_label
 
 def process(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -87,6 +36,7 @@ def capture():
     return edge_pixels(edge)
 
 def clear_command():
+    global points, labels
     points = []
     labels = []
     message("")
@@ -103,10 +53,11 @@ def box_command():
 
 def classify_command():
     message("")
-    message (classify(capture(),
-                      bidirectional_chamfer_distance(L2_vector(L2_scalar)),
-                      points,
-                      labels))
+    message(nearest_neighbor_classify(
+        capture(),
+        bidirectional_chamfer(L2_vector(L2_scalar)),
+        points,
+        labels))
 
 add_button(0, 0, "Clear", clear_command, nothing)
 show_edges = add_checkbox(0, 1, "Edges?", nothing)
@@ -114,7 +65,6 @@ add_button(0, 2, "Cup", cup_command, nothing)
 add_button(0, 3, "Box", box_command, nothing)
 add_button(0, 4, "Classify", classify_command, nothing)
 add_button(0, 5, "Exit", done, nothing)
-message = add_message(1, 0, 2)
 message = add_message(1, 0, 2)
 camera = cv2.VideoCapture(0)
 width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
