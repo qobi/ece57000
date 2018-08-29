@@ -19,7 +19,7 @@ I learned how to record and play sound for [speech_classifier_gui.py](https://gi
 
 https://python-sounddevice.readthedocs.io/en/0.3.11/
 
-I learned how to capture an image and video in for [image_classifier_gui.py](https://github.com/qobi/ece57000/blob/master/image_classifier_gui.py), [video_classifier_gui.py](https://github.com/qobi/ece57000/blob/master/video_classifier_gui.py), [image_clusterer_gui.py](https://github.com/qobi/ece57000/blob/master/image_clusterer_gui.py), and [video_clusterer_gui.py](https://github.com/qobi/ece57000/blob/master/video_clusterer_gui.py) from:
+I learned how to capture an image and video for [image_classifier_gui.py](https://github.com/qobi/ece57000/blob/master/image_classifier_gui.py), [video_classifier_gui.py](https://github.com/qobi/ece57000/blob/master/video_classifier_gui.py), [image_clusterer_gui.py](https://github.com/qobi/ece57000/blob/master/image_clusterer_gui.py), and [video_clusterer_gui.py](https://github.com/qobi/ece57000/blob/master/video_clusterer_gui.py) from:
 
 https://stackoverflow.com/questions/11094481/capturing-a-single-image-from-my-webcam-in-java-or-python
 
