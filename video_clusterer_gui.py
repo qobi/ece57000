@@ -69,10 +69,9 @@ def record_command():
     labels.append(-1)
 
 def random_labels_command():
-    global labels, means
-    means = []
-    for i in range(0, len(points)):
-        labels[i] = random.randint(0, 1)
+    global labels, medoids
+    labels = random_labels(points, 2)
+    medoids = []
     message("")
 
 def train_command():
