@@ -12,44 +12,7 @@ points = []
 labels = []
 medoids = []
 
-def L2_scalar(p1, p2):
-    return (p1-p2)*(p1-p2)
-
-def L2_vector(distance):
-    def internal(p1, p2):
-        d = 0
-        for i in range(0, len(p1)):
-            d = d+distance(p1[i], p2[i])
-        return d
-    return internal
-
-def dtw(distance):
-    def internal(s1, s2):
-        m = len(s1)
-        n = len(s2)
-        c = np.zeros((m, n))
-        c[0, 0] = distance(s1[0], s2[0])
-        for i in range(1, m):
-            c[i, 0] = distance(s1[i], s2[0])+c[i-1, 0]
-        for j in range(1, n):
-            c[0, j] = distance(s1[0], s2[j])+c[0, j-1]
-        for i in range(1, m):
-            for j in range(1, n):
-                c[i, j] = distance(s1[i], s2[j])+min(c[i-1, j],
-                                                     c[i, j-1],
-                                                     c[i-1, j-1])
-        return c[m-1, n-1]
-    return internal
-
-def classify(point, distance, points, labels):
-    best_distance = float("inf")
-    best_label = -1
-    for i in range(0, len(points)):
-        d = distance(point, points[i])
-        if d<best_distance:
-            best_distance = d
-            best_label = labels[i]
-    return best_label
+distance = dtw(L2_vector(L2_scalar))
 
 def start_recording(maximum_duration):
     def internal():
@@ -99,11 +62,8 @@ def random_labels_command():
 def train_command():
     def internal():
         global medoids
-        medoids = train(dtw(L2_vector(L2_scalar)), points, labels)
-        message("{:.6f}".format(cost(dtw(L2_vector(L2_scalar)),
-                                     points,
-                                     labels,
-                                     medoids)))
+        medoids = train(distance, points, labels)
+        message("{:.6f}".format(cost(distance, points, labels, medoids)))
     if not all_labels(labels, 2):
         message("Missing class")
     elif not all_labeled(labels):
@@ -115,16 +75,32 @@ def train_command():
 def reclassify_all_command():
     def internal():
         global labels
-        labels = reclassify_all(dtw(L2_vector(L2_scalar)), points, medoids)
-        message("{:.6f}".format(cost(dtw(L2_vector(L2_scalar)),
-                                     points,
-                                     labels,
-                                     medoids)))
+        labels = reclassify_all(distance, points, medoids)
+        message("{:.6f}".format(cost(distance, points, labels, medoids)))
     if len(medoids)==0:
         message("Train first")
     else:
         message("Reclassifying all")
         get_window().after(10, internal)
+
+def loop_command():
+    def internal(last_cost):
+        global labels, medoids
+        medoids = train(distance, points, labels)
+        labels = reclassify_all(distance, points, medoids)
+        this_cost = cost(distance, points, labels, medoids)
+        message("{:.6f}".format(this_cost))
+        if this_cost<last_cost:
+            get_window().after(500, lambda: internal(this_cost))
+        else:
+            message("Done")
+    if not all_labeled(labels):
+        message("Random labels first")
+    elif not all_labels(labels, 2):
+        message("Missing class")
+    else:
+        infinity = float("inf")
+        internal(infinity)
 
 def play_command():
     for i in range(0, len(waveforms)):
@@ -145,8 +121,9 @@ add_button(0, 0, "Clear", clear_command, nothing)
 add_button(0, 1, "Record", start_recording(10), record_command)
 add_button(0, 2, "Random labels", random_labels_command, nothing)
 add_button(0, 3, "Train", train_command, nothing)
-add_button(0, 4, "Reclassify all", reclassify_all_command, nothing)
-add_button(0, 5, "Play", play_command, nothing)
-add_button(0, 6, "Exit", done, nothing)
-message = add_message(1, 0, 7)
-start_variable_size_matplotlib(7, 7, 2, 7)
+add_button(1, 0, "Reclassify all", reclassify_all_command, nothing)
+add_button(1, 1, "Loop", loop_command, nothing)
+add_button(1, 2, "Play", play_command, nothing)
+add_button(1, 3, "Exit", done, nothing)
+message = add_message(2, 0, 4)
+start_variable_size_matplotlib(7, 7, 3, 4)

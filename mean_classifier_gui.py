@@ -6,6 +6,18 @@ points = []
 labels = []
 means = []
 
+def redisplay():
+    get_axes().clear()
+    for i in range(0, len(points)):
+        if labels[i]==0:
+            get_axes().plot([points[i][0]], [points[i][1]], "r+")
+        elif labels[i]==1:
+            get_axes().plot([points[i][0]], [points[i][1]], "b+")
+    if len(means)==2:
+        get_axes().plot([means[0][0]], [means[0][1]], "ro")
+        get_axes().plot([means[1][0]], [means[1][1]], "bo")
+    redraw()
+
 def clear_command():
     global points, labels, means
     points = []
@@ -16,20 +28,18 @@ def clear_command():
     redraw()
 
 def train_command():
-    if not all_labels(labels, 2):
-        message("Missing class")
-    else:
+    def internal():
         global means
         means = train(points, labels)
-        get_axes().clear()
-        for i in range(0, len(points)):
-            if labels[i]==0:
-                get_axes().plot([points[i][0]], [points[i][1]], "r+")
-            elif labels[i]==1:
-                get_axes().plot([points[i][0]], [points[i][1]], "b+")
-        get_axes().plot([means[0][0]], [means[0][1]], "ro")
-        get_axes().plot([means[1][0]], [means[1][1]], "bo")
-        redraw()
+        message("{:.3f}".format(cost(points, labels, means)))
+        redisplay()
+    if not all_labels(labels, 2):
+        message("Missing class")
+    elif not all_labeled(labels):
+        message("Random labels first")
+    else:
+        message("Training")
+        get_window().after(10, internal)
 
 def click(x, y):
     message("")

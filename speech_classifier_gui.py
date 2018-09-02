@@ -10,6 +10,8 @@ sd.default.channels = 1
 points = []
 labels = []
 
+distance = dtw(L2_vector(L2_scalar))
+
 def start_recording(maximum_duration, for_classify):
     def internal():
         if (not for_classify) or len(points)>0:
@@ -56,10 +58,7 @@ def classify_command():
     if len(points)==0:
         message("No data")
     else:
-        message(classify(stop_recording(),
-                         dtw(L2_vector(L2_scalar)),
-                         points,
-                         labels))
+        message(classify(stop_recording(), distance, points, labels))
 
 add_button(0, 0, "Clear", clear_command, nothing)
 add_button(0, 1, "Dog", start_recording(10, False), dog_command)

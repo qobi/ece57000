@@ -6,6 +6,20 @@ points = []
 labels = []
 medoids = []
 
+distance = L2_vector(L2_scalar)
+
+def redisplay():
+    get_axes().clear()
+    for i in range(0, len(points)):
+        if labels[i]==0:
+            get_axes().plot([points[i][0]], [points[i][1]], "r+")
+        elif labels[i]==1:
+            get_axes().plot([points[i][0]], [points[i][1]], "b+")
+    if len(medoids)==2:
+        get_axes().plot([medoids[0][0]], [medoids[0][1]], "ro")
+        get_axes().plot([medoids[1][0]], [medoids[1][1]], "bo")
+    redraw()
+
 def clear_command():
     global points, labels, medoids
     points = []
@@ -16,20 +30,18 @@ def clear_command():
     redraw()
 
 def train_command():
+    def internal():
+        global medoids
+        medoids = train(distance, points, labels)
+        message("{:.3f}".format(cost(distance, points, labels, medoids)))
+        redisplay()
     if not all_labels(labels, 2):
         message("Missing class")
+    elif not all_labeled(labels):
+        message("Random labels first")
     else:
-        global medoids
-        medoids = train(L2_vector(L2_scalar), points, labels)
-        get_axes().clear()
-        for i in range(0, len(points)):
-            if labels[i]==0:
-                get_axes().plot([points[i][0]], [points[i][1]], "r+")
-            elif labels[i]==1:
-                get_axes().plot([points[i][0]], [points[i][1]], "b+")
-        get_axes().plot([medoids[0][0]], [medoids[0][1]], "ro")
-        get_axes().plot([medoids[1][0]], [medoids[1][1]], "bo")
-        redraw()
+        message("Training")
+        get_window().after(10, internal)
 
 def click(x, y):
     message("")
@@ -47,7 +59,7 @@ def click(x, y):
         if len(medoids)==0:
             message("Train first")
         else:
-            label = classify([x, y], L2_vector(L2_scalar), medoids)
+            label = classify([x, y], distance, medoids)
             if label==0:
                 message("Red")
             elif label==1:

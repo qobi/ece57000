@@ -9,6 +9,8 @@ points = []
 labels = []
 medoids = []
 
+distance = bidirectional(chamfer(L2_vector(L2_scalar)), plus)
+
 def process(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     v = np.median(gray)
@@ -62,14 +64,8 @@ def random_labels_command():
 def train_command():
     def internal():
         global medoids
-        medoids = train(bidirectional(chamfer(L2_vector(L2_scalar)), plus),
-                        points,
-                        labels)
-        message("{:.3f}".format(
-            cost(bidirectional(chamfer(L2_vector(L2_scalar)), plus),
-                 points,
-                 labels,
-                 medoids)))
+        medoids = train(distance, points, labels)
+        message("{:.3f}".format(cost(distance, points, labels, medoids)))
     if not all_labels(labels, 2):
         message("Missing class")
     elif not all_labeled(labels):
@@ -81,20 +77,32 @@ def train_command():
 def reclassify_all_command():
     def internal():
         global labels
-        labels = reclassify_all(
-            bidirectional(chamfer(L2_vector(L2_scalar)), plus),
-            points,
-            medoids)
-        message("{:.3f}".format(
-            cost(bidirectional(chamfer(L2_vector(L2_scalar)), plus),
-                 points,
-                 labels,
-                 medoids)))
+        labels = reclassify_all(distance, points, medoids)
+        message("{:.3f}".format(cost(distance, points, labels, medoids)))
     if len(medoids)==0:
         message("Train first")
     else:
         message("Reclassifying all")
         get_window().after(10, internal)
+
+def loop_command():
+    def internal(last_cost):
+        global labels, medoids
+        medoids = train(distance, points, labels)
+        labels = reclassify_all(distance, points, medoids)
+        this_cost = cost(distance, points, labels, medoids)
+        message("{:.3f}".format(this_cost))
+        if this_cost<last_cost:
+            get_window().after(500, lambda: internal(this_cost))
+        else:
+            message("Done")
+    if not all_labeled(labels):
+        message("Random labels first")
+    elif not all_labels(labels, 2):
+        message("Missing class")
+    else:
+        infinity = float("inf")
+        internal(infinity)
 
 def show(i):
     if i<len(images):
@@ -120,12 +128,13 @@ add_button(0, 2, "Capture", capture_command, nothing)
 add_button(0, 3, "Random labels", random_labels_command, nothing)
 add_button(1, 0, "Train", train_command, nothing)
 add_button(1, 1, "Reclassify all", reclassify_all_command, nothing)
-add_button(1, 2, "Show", show_command, nothing)
-add_button(1, 3, "Exit", done, nothing)
-message = add_message(2, 0, 4)
+add_button(1, 2, "Loop", loop_command, nothing)
+add_button(1, 3, "Show", show_command, nothing)
+add_button(1, 4, "Exit", done, nothing)
+message = add_message(2, 0, 5)
 camera = cv2.VideoCapture(0)
 width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
 fps = camera.get(cv2.CAP_PROP_FPS)
 camera.release()
-start_video(width, height, 3, 4)
+start_video(width, height, 3, 5)

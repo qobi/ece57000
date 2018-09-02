@@ -5,6 +5,8 @@ from nearest_neighbor_classifier import *
 points = []
 labels = []
 
+distance = L2_vector(L2_scalar)
+
 def clear_command():
     global points, labels
     points = []
@@ -29,7 +31,7 @@ def click(x, y):
         if len(points)==0:
             message("No data")
         else:
-            label = classify([x, y], L2_vector(L2_scalar), points, labels)
+            label = classify([x, y], distance, points, labels)
             if label==0:
                 message("Red")
             elif label==1:

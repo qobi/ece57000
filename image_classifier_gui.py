@@ -7,6 +7,8 @@ import numpy as np
 points = []
 labels = []
 
+distance = bidirectional(chamfer(L2_vector(L2_scalar)), plus)
+
 def process(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     v = np.median(gray)
@@ -57,10 +59,7 @@ def classify_command():
     if len(points)==0:
         message("No data")
     else:
-        message(classify(capture(),
-                         bidirectional(chamfer(L2_vector(L2_scalar)), plus),
-                         points,
-                         labels))
+        message(classify(capture(), distance, points, labels))
 
 add_button(0, 0, "Clear", clear_command, nothing)
 show_edges = add_checkbox(0, 1, "Edges?", nothing)
