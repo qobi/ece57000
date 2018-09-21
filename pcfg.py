@@ -20,14 +20,14 @@ def check(w, a, b, c):
 
 def calculate_alpha(w, a, b, c):
     I, J, K, L = check(w, a, b, c)
-    alpha = zeros([L, I, J])
+    alpha = zeros([L, I, I, J])
     for l in range(0, L):
         for j in range(0, J):
             for i in range(0, len(w[l])):
                 alpha[l, i, i, j] = c[j, w[l][i]]
-        for d in range(2, len(w[l])):
+        for d in range(2, len(w[l])+1):
             for i1 in range(0, len(w[l])-d+1):
-                i2 = i1+d
+                i2 = i1+d-1
                 for j in range(0, J):
                     for j1 in range(0, J):
                         for j2 in range(0, J):
@@ -38,15 +38,15 @@ def calculate_alpha(w, a, b, c):
                                     alpha[l, i+1, i2, j2])
     return alpha
 
-def calculate_beta(w, a, b, c):
+def calculate_beta(w, a, b, c, alpha):
     I, J, K, L = check(w, a, b, c)
-    beta = zeros([L, I, J])
+    beta = zeros([L, I, I, J])
     for l in range(0, L):
         for j in range(0, J):
-            beta[l, 1, len(w[l])-1, j] = b[j]
-        for d in range(2, len(w[l])):
+            beta[l, 0, len(w[l])-1, j] = b[j]
+        for d in range(len(w[l])-1, 0, -1):
             for i1 in range(0, len(w[l])-d+1):
-                i2 = i1+d
+                i2 = i1+d-1
                 for j in range(0, J):
                     for j1 in range(0, J):
                         for j2 in range(0, J):
@@ -67,7 +67,7 @@ def random_gamma(w, J):
     I = max([len(w[l]) for l in range(0, L)])
     gamma = zeros([L, I, I, J])
     for l in range(0, L):
-        for i1 in range(0, len(w[l])-1):
+        for i1 in range(0, len(w[l])):
             for i2 in range(i1, len(w[l])):
                 for j in range(0, J):
                     gamma[l, i1, i2, j] = random()
@@ -77,14 +77,15 @@ def random_gamma(w, J):
 def calculate_gamma(w, a, b, c):
     I, J, K, L = check(w, a, b, c)
     alpha = calculate_alpha(w, a, b, c)
-    beta = calculate_beta(w, a, b, c)
+    beta = calculate_beta(w, a, b, c, alpha)
     gamma = zeros([L, I, I, J])
     for l in range(0, L):
-        for i1 in range(0, len(w[l])-1):
+        for i1 in range(0, len(w[l])):
             for i2 in range(i1, len(w[l])):
                 for j in range(0, J):
                     gamma[l, i1, i2, j] = alpha[l, i1, i2, j]*beta[l, i1, i2, j]
-                gamma[l, i1, i2 :] /= sum(gamma[l, i1, i2, :])
+                if sum(gamma[l, i1, i2, :])!=0:
+                    gamma[l, i1, i2, :] /= sum(gamma[l, i1, i2, :])
     return gamma
 
 def train(w, gamma):
@@ -111,14 +112,15 @@ def train(w, gamma):
                                     gamma[l, i1, i2, j1]*
                                     gamma[l, i2+1, i3, j2])
         for l in range(0, L):
-            b[j] += gamma[l, 0, len(w[l]), j]
+            b[j] += gamma[l, 0, len(w[l])-1, j]
         for k in range(0, K):
             for l in range(0, L):
                 for i in range(0, len(w[l])):
                     if w[l][i]==k:
                         c[j, k] += gamma[l, i, i, j]
-        a[j, :, :] /= sum(a[j, :, :])+sum(c[j, :])
-        c[j, :] /= sum(a[j, :, :])+sum(c[j, :])
+        denominator = sum(c[j, :])+sum(a[j, :, :])
+        c[j, :] /= denominator
+        a[j, :, :] /= denominator
     b /= sum(b)
     return a, b, c
 
@@ -135,7 +137,7 @@ def likelihood(w, a, b, c):
 
 def alternate_likelihood(w, a, b, c):
     I, J, K, L = check(w, a, b, c)
-    beta = calculate_beta(w, a, b, c)
+    beta = calculate_beta(w, a, b, c, calculate_alpha(w, a, b, c))
     p = 1
     i = 0
     for l in range(0, L):
@@ -145,7 +147,7 @@ def alternate_likelihood(w, a, b, c):
         p *= pl
     return p
 
-def sample(a, b, c, I):
+def sample(a, b, c):
     J = len(b)
     K = c.shape[1]
     j = choice(range(0, J), 1, p=b)[0]
@@ -159,16 +161,15 @@ def sample(a, b, c, I):
             return s((r-K)/J)+s((r-K)%J)
     return s(j)
 
-def samples(a, b, c, I, L):
-    return [sample(a, b, c, I) for l in range(0, L)]
+def samples(a, b, c, L):
+    return [sample(a, b, c) for l in range(0, L)]
 
-a = array([[[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0,] [0, 0, 0, 0]],
-           [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0,] [0, 0, 0, 0]],
-           [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0,] [0, 0, 0, 0]],
-           [[0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0,] [0, 0, 0, 0]]])
-
+a = array([[[0, 0, 0, 0], [0, 0, 0, 0.7], [0, 0, 0, 0,], [0, 0, 0, 0]],
+           [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0,], [0, 0, 0, 0]],
+           [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0,], [0, 0, 0, 0]],
+           [[0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0,], [0, 0, 0, 0]]])
 b = array([1, 0, 0, 0])
-c = array([[0, 0, 0.5], [1, 0, 0], [0, 1, 0], [0, 0, 0]])
+c = array([[0, 0, 0.3], [1, 0, 0], [0, 1, 0], [0, 0, 0]])
 
 def baker_lari_young_initial(w, J):
     gamma = random_gamma(w, J)
