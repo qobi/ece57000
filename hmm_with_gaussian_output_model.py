@@ -144,10 +144,12 @@ def sample(a, b, means, variances, I):
 def samples(a, b, means, variances, I, L):
     return [sample(a, b, means, variances, I) for l in range(0, L)]
 
-a = array([[0.5, 0.5], [0, 1]])
-b = array([1, 0])
-means = array([[0, 0], [1, 1]])
-variances = array([[[1, 0], [0, 1]], [[1, 0], [0, 1]]])
+def model():
+    a = array([[0.5, 0.5], [0, 1]])
+    b = array([1, 0])
+    means = array([[0, 0], [1, 1]])
+    variances = array([[[1, 0], [0, 1]], [[1, 0], [0, 1]]])
+    return a, b, means, variances
 
 def baum_welch_initial(w, J):
     gamma = random_gamma(w, J)
