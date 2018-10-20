@@ -132,9 +132,11 @@ def sample(a, b, c, I):
 def samples(a, b, c, I, L):
     return [sample(a, b, c, I) for l in range(0, L)]
 
-a = array([[0.5, 0.5], [0, 1]])
-b = array([1, 0])
-c = array([[1, 0], [0, 1]])
+def model():
+    a = array([[0.5, 0.5], [0, 1]])
+    b = array([1, 0])
+    c = array([[1, 0], [0, 1]])
+    return a, b, c
 
 def baum_welch_initial(w, J):
     gamma = random_gamma(w, J)

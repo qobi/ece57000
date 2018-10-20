@@ -69,6 +69,19 @@ def train_command():
         message("Training")
         get_window().after(10, internal)
 
+def all_command():
+    resolution = 50
+    scale = 1.0/resolution
+    for y in range(0, resolution+1):
+        for x in range(0, resolution+1):
+            labels = classify(
+                [scale*x, scale*y], mixture_proportions, means, variances)
+            if labels[0]>labels[1]:
+                get_axes().plot([scale*x], [scale*y], "r.")
+            else:
+                get_axes().plot([scale*x], [scale*y], "b.")
+    redraw()
+
 def click(x, y):
     message("")
     if mode()==0:
@@ -94,7 +107,8 @@ mode = add_radio_button_group([[0, 1, "Red", 0],
                                [0, 3, "Classify", 2]],
                               lambda: False)
 add_button(0, 4, "Train", train_command, nothing)
-add_button(0, 5, "Exit", done, nothing)
-message = add_message(1, 0, 6)
+add_button(0, 5, "All", all_command, nothing)
+add_button(0, 6, "Exit", done, nothing)
+message = add_message(1, 0, 7)
 add_click(click)
-start_fixed_size_matplotlib(7, 7, 2, 6)
+start_fixed_size_matplotlib(7, 7, 2, 7)
