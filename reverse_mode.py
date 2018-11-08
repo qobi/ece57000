@@ -150,20 +150,20 @@ def ad_max(x, y):
     else:
         return y
 
-def reverse_phase(cotangent, tape):
+def reverse_sweep(cotangent, tape):
     set_tape_cotangent(tape, tape_cotangent(tape)+cotangent)
     decrement_tape_fanout(tape)
     if tape_fanout(tape)==0:
         cotangent = tape_cotangent(tape)
         for factor, tape in zip(tape_factors(tape), tape_tapes(tape)):
-            reverse_phase(cotangent*factor, tape)
+            reverse_sweep(cotangent*factor, tape)
 
 def derivative(f):
     def inner(x):
         input = lift_primal_to_tape(x)
         output = f(input)
         increment_tape_fanout(output)
-        reverse_phase(1, output)
+        reverse_sweep(1, output)
         return tape_cotangent(input)
     return inner
 
@@ -182,7 +182,7 @@ def gradient(f):
         inputs = [lift_primal_to_tape(x) for x in xs]
         output = f(inputs)
         increment_tape_fanout(output)
-        reverse_phase(1, output)
+        reverse_sweep(1, output)
         return [tape_cotangent(input) for input in inputs]
     return inner
 
